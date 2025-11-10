@@ -76,6 +76,12 @@ impl AppState {
     }
 }
 
+impl Default for AppState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
     let mut stderr = io::stderr(); // This is a special case. Normally using stdout is fine
@@ -85,7 +91,7 @@ fn main() -> io::Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     // create app and run it
-    let mut app = AppState::new();
+    let mut app = AppState::default();
     run_app(&mut terminal, &mut app)?;
     disable_raw_mode()?;
     execute!(
@@ -113,7 +119,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app_state: &mut AppState) -> 
                     }
                     KeyCode::Enter => {
                         // Edit selected
-                        if app_state.items.len() > 0 {
+                        if !app_state.items.is_empty() {
                             if let Some(sel_index) = app_state.todo_list_state.selected() {
                                 if let Some(e) = Some(app_state.items[sel_index].clone()) {
                                     app_state.input = e.description.clone().into();
@@ -129,7 +135,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app_state: &mut AppState) -> 
                     }
                     KeyCode::Char(' ') => {
                         // Mark selected
-                        if app_state.items.len() > 0 {
+                        if !app_state.items.is_empty() {
                             if let Some(sel_index) = app_state.todo_list_state.selected() {
                                 app_state.items[sel_index].done = !app_state.items[sel_index].done;
                             }
@@ -208,10 +214,8 @@ fn main_ui(frame: &mut Frame, app_state: &mut AppState) -> io::Result<()> {
     let items: Vec<ListItem> = app_state
         .items
         .iter()
-        .enumerate()
-        .map(|(_i, todo_item)| {
-            let list_item = ListItem::from(todo_item);
-            list_item
+        .map(|todo_item| {
+            ListItem::from(todo_item)
         })
         .collect();
     let lis = List::new(items)
